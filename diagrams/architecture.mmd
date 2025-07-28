@@ -1,0 +1,28 @@
+%% Mermaid architecture diagram
+flowchart LR
+  subgraph GitHub
+    GH[GitHub Actions\nOIDC token]
+  end
+
+  subgraph AWS[Amazon Web Services]
+    subgraph VPC
+      ALB[(Application Load Balancer)]
+      SVC[ECS Service\n(Fargate)]
+      TASK1[(Task #1)]
+      TASK2[(Task #2 during deploy)]
+    end
+    ECR[(Elastic Container Registry)]
+    CW[(CloudWatch Logs)]
+    IAM[(IAM Role\nGitHub OIDC trust)]
+  end
+
+  GH -->|AssumeRoleWithWebIdentity| IAM
+  GH -->|docker push| ECR
+  GH -->|RegisterTaskDef & UpdateService| SVC
+  SVC -->|pull image| ECR
+  SVC --> TASK1
+  SVC --> TASK2
+  TASK1 -. logs .-> CW
+  TASK2 -. logs .-> CW
+  ALB --> TASK1
+  ALB --> TASK2
