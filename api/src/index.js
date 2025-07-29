@@ -13,6 +13,10 @@ const TODOS = [
   { id: 3, title: "Post the GIF on LinkedIn", done: false }
 ];
 
+app.get("/", (req, res) =>
+  res.send("One‑Click Flutter Backend is running 🎉 — try /todos")
+);
+
 app.get("/todos", (req, res) => res.json(TODOS));
 
 app.post("/todos", (req, res) => {
