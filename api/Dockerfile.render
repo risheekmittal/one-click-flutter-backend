@@ -1,0 +1,14 @@
+# Render-friendly Dockerfile (no internal healthcheck)
+FROM node:20-alpine
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY src ./src
+ENV NODE_ENV=production
+
+# Render sets PORT; the app uses process.env.PORT
+EXPOSE 10000
+
+CMD ["node", "src/index.js"]
