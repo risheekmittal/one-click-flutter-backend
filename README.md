@@ -1,62 +1,59 @@
-# One‑Click Flutter Backend (Render Free)
+# One‑Click Flutter Backend
 
-Minimal Node.js REST API with `/health` and `/todos`. Designed to deploy **free** on **Render**.
-You can also reuse the same code for **Google Cloud Run** or **AWS ECS Fargate** later.
+Now with **Postgres persistence, JWT auth, Jest tests, and custom domain guide**.
 
-## Deploy to Render (Free)
-
-1. Create a GitHub repo and push this project.
-2. In Render: **New → Web Service → Connect GitHub**.
-3. Settings:
-   - **Root directory**: `api`
-   - **Build command**: `npm ci`
-   - **Start command**: `node src/index.js`
-   - **Instance type**: **Free**
-   - **Health Check Path**: `/health` (recommended)
-   - No env vars required; Render injects `PORT` which the app uses.
-
-After deploy, open:
-
-- `GET /health` → 200 OK
-- `GET /todos`
-- `POST /todos` with JSON body `{ "title": "My task", "done": false }`
-
-### Free-tier behavior
-- Free services may **sleep when idle**; the first request after sleep will be slower.
-- You have **750 instance hours/month per workspace**. If you exhaust them, services pause until next month.
-
-## Local development
+## Quick local run
 
 ```bash
 cd api
-npm ci
+npm install
 npm run dev
-# or
-npm run start
 ```
 
-Visit `http://localhost:8080/health`.
-
-## Docker (optional)
+Login → token:
 
 ```bash
-docker build -t oneclick:dev ./api
-docker run -p 8080:8080 oneclick:dev
+curl -X POST http://localhost:8080/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"secret"}'
 ```
 
-## Optional: Cloud Run
+Response: `{"token":"<jwt>"}`
+
+Add todo:
 
 ```bash
-gcloud auth login
-gcloud config set project YOUR_PROJECT
-gcloud builds submit api --tag gcr.io/YOUR_PROJECT/oneclick
-gcloud run deploy oneclick --image gcr.io/YOUR_PROJECT/oneclick --region asia-south1 --allow-unauthenticated --port 8080
+curl -X POST http://localhost:8080/todos \
+  -H "Authorization: Bearer <jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Read docs"}'
 ```
 
-## Optional: AWS ECS Fargate (paid unless using credits)
+## Persistence on Render
 
-See `ecs/task-definition.json`, `ecs/service-settings.md`, and `.github/workflows/deploy.yml` for a CI/CD pipeline using GitHub Actions + OIDC.
-Replace ARNs and image URIs before using.
+1. Render → **New → PostgreSQL** → Free.
+2. Copy **Internal Database URL** → Web Service → **Environment** → `DATABASE_URL`.
+3. Add `PGSSL=true` env var (Render requires SSL).
+4. Deploy – table is auto‑created.
 
----
-_Generated on 2025-07-28_
+No `DATABASE_URL`? API falls back to in‑memory.
+
+## Tests
+
+```bash
+cd api
+npm test
+```
+
+## Custom domain (Render)
+
+Settings → Custom Domains → Add → update DNS → Render issues HTTPS.
+
+## Deployment matrix
+
+* **Render Free** – Node env or Dockerfile.render
+* **Cloud Run** – see README.v2
+* **Cloudflare Workers** – rewrite handler
+* **AWS Fargate** – templates in `ecs/`
+
+_Generated 2025-07-29_
